@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>تسميع القرآن</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#126e4e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+
+<style>
+:root{--bg:#f1f6f3;--card:#fff;--fg:#1c2b24;--muted:#5d7066;--accent:#1f7a55;--accent-fg:#fff;--good:#1b7f3b;--bad:#c62828;--line:#cfdcd4;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1a15;--card:#18271f;--fg:#e6f0ea;--muted:#9bb0a4;--accent:#3fbf8a;--accent-fg:#06281a;--good:#6fdc8c;--bad:#ff8a80;--line:#2c4337}}
+:root[data-theme="dark"]{--bg:#0f1a15;--card:#18271f;--fg:#e6f0ea;--muted:#9bb0a4;--accent:#3fbf8a;--accent-fg:#06281a;--good:#6fdc8c;--bad:#ff8a80;--line:#2c4337}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;padding:16px;text-align:center}
+main{max-width:520px;margin:0 auto}
+h1{font-size:26px;margin:6px 0 14px}
+.row{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;justify-content:center;flex-wrap:wrap}
+button{font:inherit;font-weight:700;border-radius:12px;border:2px solid var(--accent);background:transparent;color:var(--accent);padding:10px 16px;cursor:pointer}
+button.on,button.main{background:var(--accent);color:var(--accent-fg)}
+button:disabled{opacity:.45}
+button.link{border:0;font-weight:600;text-decoration:underline}
+#count{margin:14px 0 8px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px 14px;min-height:130px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#ayah{font-family:"Amiri","Scheherazade New","Noto Naskh Arabic","Traditional Arabic",serif;font-size:30px;line-height:2}
+#q{font-size:64px;font-weight:900;line-height:1}
+#hint{margin-top:6px;font-size:20px;color:var(--muted)}
+#msg{margin:14px 0 4px;min-height:30px;font-size:20px;font-weight:800}
+#heard{font-size:22px;min-height:28px}
+.ok{color:var(--good);font-weight:700}.bad{color:var(--bad);font-weight:700}
+#mic{display:block;width:100%;font-size:20px;padding:15px;margin-top:14px}
+#reveal{display:block;width:100%;margin-top:10px}
+details{margin:14px 0;color:var(--muted)}
+details input{width:100%;font:inherit;font-size:20px;padding:10px;margin:10px 0;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--fg)}
+.nav{display:flex;justify-content:space-between;margin-top:14px}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<main>
+  <h1>📖 تسميع القرآن</h1>
+  <div class="row" id="surahs"></div>
+  <div id="count"></div>
+  <section class="card">
+    <div id="q">؟</div>
+    <div id="hint"></div>
+    <div id="ayah" hidden></div>
+  </section>
+  <div id="msg"></div>
+  <div id="heard"></div>
+  <button class="main" id="mic">🎤 ابدأ التسميع</button>
+  <button id="reveal" hidden>💡 إظهار الآية الصحيحة</button>
+  <button class="link" id="hintBtn">تلميح: أول كلمة</button>
+  <details>
+    <summary>الميكروفون مش شغال؟ اكتب الآية للتجربة</summary>
+    <input id="typed" placeholder="اكتب ما حفظته هنا" autocomplete="off">
+    <button id="check">تحقق</button>
+  </details>
+  <div class="nav"><button id="prev">السابقة</button><button id="next">التالية</button></div>
+</main>
+<script>
+var SURAHS=[
+{n:"الفاتحة",a:["بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ","الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ","الرَّحْمَٰنِ الرَّحِيمِ","مَالِكِ يَوْمِ الدِّينِ","إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ","اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ","صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ"]},
+{n:"الإخلاص",a:["قُلْ هُوَ اللَّهُ أَحَدٌ","اللَّهُ الصَّمَدُ","لَمْ يَلِدْ وَلَمْ يُولَدْ","وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ"]},
+{n:"الفلق",a:["قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ","مِن شَرِّ مَا خَلَقَ","وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ","وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ","وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ"]},
+{n:"الناس",a:["قُلْ أَعُوذُ بِرَبِّ النَّاسِ","مَلِكِ النَّاسِ","إِلَٰهِ النَّاسِ","مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ","الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ","مِنَ الْجِنَّةِ وَالنَّاسِ"]}
+];
+var s=0,a=0,expOk=[],listening=false;
+var $=function(id){return document.getElementById(id)};
+
+function norm(t){
+  return t.replace(/[\u064B-\u065F\u0670\u06D6-\u06ED\u0640]/g,"")
+   .replace(/[إأآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/ؤ/g,"و").replace(/ئ/g,"ي")
+   .replace(/[^\u0621-\u063A\u0641-\u064A\s]/g,"").trim().replace(/\s+/g," ");
+}
+function lev(x,y){
+  var d=[],i,j;for(j=0;j<=y.length;j++)d[j]=j;
+  for(i=1;i<=x.length;i++){var prev=d[0];d[0]=i;
+    for(j=1;j<=y.length;j++){var t=d[j];
+      d[j]=Math.min(d[j]+1,d[j-1]+1,prev+(x[i-1]===y[j-1]?0:1));prev=t;}}
+  return d[y.length];
+}
+function wm(x,y){
+  if(x===y)return true;var L=Math.max(x.length,y.length);
+  if(L<5)return false;return lev(x,y)<=(L>=9?2:1);
+}
+function compare(E,S){
+  var n=E.length,m=S.length,dp=[],i,j;
+  for(i=0;i<=n;i++){dp[i]=[];for(j=0;j<=m;j++)dp[i][j]=0;}
+  for(i=1;i<=n;i++)for(j=1;j<=m;j++)
+    dp[i][j]=wm(E[i-1],S[j-1])?dp[i-1][j-1]+1:Math.max(dp[i-1][j],dp[i][j-1]);
+  var eo=E.map(function(){return false}),so=S.map(function(){return false});
+  i=n;j=m;
+  while(i>0&&j>0){
+    if(wm(E[i-1],S[j-1])&&dp[i][j]===dp[i-1][j-1]+1){eo[i-1]=true;so[j-1]=true;i--;j--;}
+    else if(dp[i-1][j]>=dp[i][j-1])i--;else j--;
+  }
+  return{eo:eo,so:so,matched:dp[n][m],perfect:dp[n][m]===n&&m===n};
+}
+function words(){return SURAHS[s].a[a].split(" ")}
+function paint(ws,ok){
+  return ws.map(function(w,i){return '<span class="'+(ok[i]===false?'bad':'ok')+'">'+w+'</span>'}).join(" ");
+}
+function resetUI(){
+  expOk=[];$("msg").textContent="";$("msg").style.color="";$("heard").innerHTML="";
+  $("reveal").hidden=true;$("ayah").hidden=true;$("q").hidden=false;$("hint").textContent="";
+  $("typed").value="";
+  $("count").textContent="الآية "+(a+1)+" من "+SURAHS[s].a.length;
+  $("prev").disabled=a===0;$("next").disabled=a===SURAHS[s].a.length-1;
+}
+function drawSurahs(){
+  $("surahs").innerHTML="";
+  SURAHS.forEach(function(x,i){
+    var b=document.createElement("button");b.textContent=x.n;if(i===s)b.className="on";
+    b.onclick=function(){s=i;a=0;drawSurahs();resetUI();};$("surahs").appendChild(b);
+  });
+}
+function evaluate(cands){
+  var E=words().map(norm),best=null,bw=[];
+  cands.forEach(function(c){
+    var w=norm(c).split(" ").filter(Boolean),r=compare(E,w);
+    if(!best||r.matched>best.matched||(r.perfect&&!best.perfect)){best=r;bw=w;}
+  });
+  expOk=best.eo;
+  $("heard").innerHTML="<small>ما سمعناه:</small><br>"+paint(bw,best.so);
+  if(best.perfect){
+    $("msg").textContent="أحسنت! تسميع صحيح ✅";$("msg").style.color="var(--good)";
+    $("q").hidden=true;$("ayah").hidden=false;$("ayah").innerHTML=paint(words(),[]);
+  }else{
+    $("msg").textContent="❌ يوجد خطأ في التسميع";$("msg").style.color="var(--bad)";
+    $("reveal").hidden=false;
+  }
+}
+$("reveal").onclick=function(){
+  $("q").hidden=true;$("ayah").hidden=false;$("ayah").innerHTML=paint(words(),expOk);$("reveal").hidden=true;
+};
+$("hintBtn").onclick=function(){$("hint").textContent="أول كلمة: "+words()[0]+" ..."};
+$("prev").onclick=function(){if(a>0){a--;resetUI();}};
+$("next").onclick=function(){if(a<SURAHS[s].a.length-1){a++;resetUI();}};
+$("check").onclick=function(){
+  var v=$("typed").value;if(!norm(v)){return}
+  $("reveal").hidden=true;evaluate([v]);
+};
+
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+$("mic").onclick=function(){
+  if(!SR){$("msg").textContent="المتصفح لا يدعم التعرف على الصوت. افتح الصفحة من Chrome أو استخدم خانة الكتابة";$("msg").style.color="var(--bad)";return}
+  if(listening)return;
+  var r=new SR();r.lang="ar-SA";r.maxAlternatives=5;r.interimResults=false;
+  r.onstart=function(){listening=true;$("mic").textContent="🎤 جارٍ الاستماع...";$("mic").disabled=true;$("msg").textContent="اتفضل بالتسميع...";$("msg").style.color=""};
+  r.onend=function(){listening=false;$("mic").textContent="🎤 ابدأ التسميع";$("mic").disabled=false};
+  r.onerror=function(e){
+    var t=e.error==="not-allowed"||e.error==="service-not-allowed"?"الميكروفون غير مسموح هنا. افتح الصفحة في Chrome وامنحه الإذن، أو استخدم خانة الكتابة":
+          e.error==="no-speech"?"لم أسمع شيئاً، حاول مرة أخرى":"حدث خطأ ("+e.error+"). تأكد من الإنترنت";
+    $("msg").textContent=t;$("msg").style.color="var(--bad)";
+  };
+  r.onresult=function(e){
+    var c=[],i;for(i=0;i<e.results[0].length;i++)c.push(e.results[0][i].transcript);
+    evaluate(c);
+  };
+  try{r.start()}catch(err){}
+};
+drawSurahs();resetUI();
+if("serviceWorker" in navigator){try{navigator.serviceWorker.register("sw.js")}catch(e){}}
+</script>
+</body>
+</html>
